@@ -1,4 +1,7 @@
 "use client"
+
+import type React from "react"
+
 import { useState } from "react"
 import { Building, Calendar, Filter, MessageSquare, Pin, PlusCircle, Search, Tag, ThumbsUp, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,22 +12,16 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { CustomDialog } from "@/components/ui/custom-dialog"
 
 export default function BulletinPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [newPostContent, setNewPostContent] = useState("")
-  const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false)
-  const [activeCategory, setActiveCategory] = useState("All")
-  const [activeBuilding, setActiveBuilding] = useState("All Buildings")
 
-  const handleNewPost = () => {
+  const handleNewPost = (e: React.FormEvent) => {
+    e.preventDefault()
     // Handle new post submission
-    if (!newPostContent.trim()) return
-
     console.log("New post:", newPostContent)
     setNewPostContent("")
-    setIsNewPostModalOpen(false)
   }
 
   // Mock bulletin board data
@@ -138,23 +135,6 @@ export default function BulletinPage() {
     { name: "Recommendations", count: communityPosts.filter((p) => p.category === "Recommendations").length },
   ]
 
-  const buildings = ["All Buildings", "Sunset Towers", "Riverside Apartments", "Oakwood Residences"]
-
-  // Filter posts based on search query, category, and building
-  const filteredAnnouncements = announcements.filter(
-    (announcement) =>
-      (activeCategory === "All" || activeCategory === "Announcements" || announcement.category === activeCategory) &&
-      (activeBuilding === "All Buildings" || announcement.building === activeBuilding) &&
-      (announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        announcement.content.toLowerCase().includes(searchQuery.toLowerCase())),
-  )
-
-  const filteredCommunityPosts = communityPosts.filter(
-    (post) =>
-      (activeCategory === "All" || activeCategory === "Community" || post.category === activeCategory) &&
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-2">
@@ -176,13 +156,10 @@ export default function BulletinPage() {
                 {categories.map((category) => (
                   <button
                     key={category.name}
-                    className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm ${
-                      activeCategory === category.name ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`}
-                    onClick={() => setActiveCategory(category.name)}
+                    className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                   >
                     <span>{category.name}</span>
-                    <Badge variant={activeCategory === category.name ? "outline" : "secondary"} className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto">
                       {category.count}
                     </Badge>
                   </button>
@@ -197,17 +174,18 @@ export default function BulletinPage() {
             </CardHeader>
             <CardContent className="space-y-2 p-0">
               <div className="px-4 pb-4 space-y-1">
-                {buildings.map((building) => (
-                  <button
-                    key={building}
-                    className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm ${
-                      activeBuilding === building ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`}
-                    onClick={() => setActiveBuilding(building)}
-                  >
-                    <span>{building}</span>
-                  </button>
-                ))}
+                <button className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                  <span>All Buildings</span>
+                </button>
+                <button className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                  <span>Sunset Towers</span>
+                </button>
+                <button className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                  <span>Riverside Apartments</span>
+                </button>
+                <button className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                  <span>Oakwood Residences</span>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -231,48 +209,12 @@ export default function BulletinPage() {
                 <Filter className="mr-2 h-4 w-4" />
                 Filter
               </Button>
-              <Button size="sm" onClick={() => setIsNewPostModalOpen(true)}>
+              <Button size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Post
               </Button>
             </div>
           </div>
-
-          {/* Custom Dialog for New Post */}
-          <CustomDialog
-            isOpen={isNewPostModalOpen}
-            onClose={() => setIsNewPostModalOpen(false)}
-            title="Create New Post"
-            footer={
-              <>
-                <Button variant="outline" onClick={() => setIsNewPostModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleNewPost} disabled={!newPostContent.trim()}>
-                  Post
-                </Button>
-              </>
-            }
-          >
-            <div className="space-y-4">
-              <Textarea
-                placeholder="What's on your mind?"
-                className="min-h-[100px]"
-                value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-              />
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm">
-                  <Tag className="mr-2 h-3.5 w-3.5" />
-                  Category
-                </Button>
-                <Button type="button" variant="outline" size="sm">
-                  <Users className="mr-2 h-3.5 w-3.5" />
-                  Audience
-                </Button>
-              </div>
-            </div>
-          </CustomDialog>
 
           <Tabs defaultValue="announcements" className="space-y-4">
             <TabsList>
@@ -281,74 +223,61 @@ export default function BulletinPage() {
             </TabsList>
 
             <TabsContent value="announcements" className="space-y-4">
-              {filteredAnnouncements.length > 0 ? (
-                filteredAnnouncements.map((announcement) => (
-                  <Card key={announcement.id} className={announcement.pinned ? "border-primary/50" : ""}>
-                    {announcement.pinned && (
-                      <div className="bg-primary/10 px-4 py-1 text-xs font-medium text-primary flex items-center">
-                        <Pin className="mr-1 h-3 w-3" />
-                        Pinned Announcement
+              {announcements.map((announcement) => (
+                <Card key={announcement.id} className={announcement.pinned ? "border-primary/50" : ""}>
+                  {announcement.pinned && (
+                    <div className="bg-primary/10 px-4 py-1 text-xs font-medium text-primary flex items-center">
+                      <Pin className="mr-1 h-3 w-3" />
+                      Pinned Announcement
+                    </div>
+                  )}
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{announcement.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {announcement.date}
+                          <Separator orientation="vertical" className="h-3" />
+                          <Building className="h-3 w-3" />
+                          {announcement.building}
+                          <Separator orientation="vertical" className="h-3" />
+                          <Tag className="h-3 w-3" />
+                          {announcement.category}
+                        </CardDescription>
                       </div>
-                    )}
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle>{announcement.title}</CardTitle>
-                          <CardDescription className="flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3" />
-                            {announcement.date}
-                            <Separator orientation="vertical" className="h-3" />
-                            <Building className="h-3 w-3" />
-                            {announcement.building}
-                            <Separator orientation="vertical" className="h-3" />
-                            <Tag className="h-3 w-3" />
-                            {announcement.category}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">{announcement.content}</p>
-                    </CardContent>
-                    <CardFooter className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage
-                            src={announcement.author.avatar || "/placeholder.svg"}
-                            alt={announcement.author.name}
-                          />
-                          <AvatarFallback>
-                            {announcement.author.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-xs">
-                          <span className="font-medium">{announcement.author.name}</span>
-                          <span className="text-muted-foreground"> • {announcement.author.role}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          <span>{announcement.likes}</span>
-                        </button>
-                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          <span>{announcement.comments}</span>
-                        </button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-8">
-                    <p className="text-muted-foreground">No announcements found.</p>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">{announcement.content}</p>
                   </CardContent>
+                  <CardFooter className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage
+                          src={announcement.author.avatar || "/placeholder.svg"}
+                          alt={announcement.author.name}
+                        />
+                        <AvatarFallback>SJ</AvatarFallback>
+                      </Avatar>
+                      <div className="text-xs">
+                        <span className="font-medium">{announcement.author.name}</span>
+                        <span className="text-muted-foreground"> • {announcement.author.role}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        <span>{announcement.likes}</span>
+                      </button>
+                      <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>{announcement.comments}</span>
+                      </button>
+                    </div>
+                  </CardFooter>
                 </Card>
-              )}
+              ))}
             </TabsContent>
 
             <TabsContent value="community" className="space-y-4">
@@ -356,85 +285,79 @@ export default function BulletinPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Create a Post</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="What's on your mind?"
-                    className="min-h-[100px]"
-                    value={newPostContent}
-                    onChange={(e) => setNewPostContent(e.target.value)}
-                  />
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm">
-                      <Tag className="mr-2 h-3.5 w-3.5" />
-                      Category
+                <form onSubmit={handleNewPost}>
+                  <CardContent>
+                    <Textarea
+                      placeholder="What's on your mind?"
+                      className="min-h-[100px]"
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                    />
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm">
+                        <Tag className="mr-2 h-3.5 w-3.5" />
+                        Category
+                      </Button>
+                      <Button type="button" variant="outline" size="sm">
+                        <Users className="mr-2 h-3.5 w-3.5" />
+                        Audience
+                      </Button>
+                    </div>
+                    <Button type="submit" size="sm" disabled={!newPostContent.trim()}>
+                      Post
                     </Button>
-                    <Button type="button" variant="outline" size="sm">
-                      <Users className="mr-2 h-3.5 w-3.5" />
-                      Audience
-                    </Button>
-                  </div>
-                  <Button size="sm" disabled={!newPostContent.trim()} onClick={handleNewPost}>
-                    Post
-                  </Button>
-                </CardFooter>
+                  </CardFooter>
+                </form>
               </Card>
 
-              {filteredCommunityPosts.length > 0 ? (
-                filteredCommunityPosts.map((post) => (
-                  <Card key={post.id}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={post.author.avatar || "/placeholder.svg"} alt={post.author.name} />
-                          <AvatarFallback>
-                            {post.author.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{post.author.name}</div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{post.author.unit}</span>
-                            <Separator orientation="vertical" className="h-3" />
-                            <span>{post.date}</span>
-                          </div>
+              {communityPosts.map((post) => (
+                <Card key={post.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={post.author.avatar || "/placeholder.svg"} alt={post.author.name} />
+                        <AvatarFallback>
+                          {post.author.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{post.author.name}</div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{post.author.unit}</span>
+                          <Separator orientation="vertical" className="h-3" />
+                          <span>{post.date}</span>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm">{post.content}</p>
-                      <Badge variant="outline" className="mt-3">
-                        {post.category}
-                      </Badge>
-                    </CardContent>
-                    <CardFooter className="flex justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          <span>{post.likes}</span>
-                        </button>
-                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          <span>{post.comments}</span>
-                        </button>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        Reply
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-8">
-                    <p className="text-muted-foreground">No community posts found.</p>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">{post.content}</p>
+                    <Badge variant="outline" className="mt-3">
+                      {post.category}
+                    </Badge>
                   </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        <span>{post.likes}</span>
+                      </button>
+                      <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>{post.comments}</span>
+                      </button>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      Reply
+                    </Button>
+                  </CardFooter>
                 </Card>
-              )}
+              ))}
             </TabsContent>
           </Tabs>
         </div>
