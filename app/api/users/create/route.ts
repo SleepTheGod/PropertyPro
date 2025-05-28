@@ -4,11 +4,11 @@ import { db } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, phone } = await request.json()
+    const { name, email, password, phone, role } = await request.json()
 
     // Validate input
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Name, email and password are required" }, { status: 400 })
+    if (!name || !email || !password || !role) {
+      return NextResponse.json({ error: "Name, email, password and role are required" }, { status: 400 })
     }
 
     // Check if user already exists
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO users (name, email, password, phone, role) 
        VALUES ($1, $2, $3, $4, $5) 
        RETURNING id, name, email, phone, role`,
-      [name, email, hashedPassword, phone || null, "tenant"],
+      [name, email, hashedPassword, phone || null, role],
     )
 
     const newUser = result.rows[0]
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       user: newUser,
     })
   } catch (error) {
-    console.error("Registration error:", error)
+    console.error("User creation error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

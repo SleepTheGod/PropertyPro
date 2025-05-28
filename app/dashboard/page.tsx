@@ -1,31 +1,10 @@
-"use client"
-
-import { CardFooter } from "@/components/ui/card"
-
-import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Building, CreditCard, DollarSign, Home, PenToolIcon as Tool, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect("/login?callbackUrl=/dashboard")
-    },
-  })
-
-  if (status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    )
-  }
-
   // Mock data
   const tenant = {
     name: "John Doe",
@@ -73,77 +52,10 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back, {session?.user?.name}. You are logged in as a{" "}
-          <span className="font-medium capitalize">{session?.user?.role}</span>.
-        </p>
+        <p className="text-muted-foreground">Welcome back, {tenant.name}. Here's an overview of your account.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>User Information</CardTitle>
-            <CardDescription>Your account details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="font-medium">Name:</span>
-                <span>{session?.user?.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Email:</span>
-                <span>{session?.user?.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Role:</span>
-                <span className="capitalize">{session?.user?.role}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">User ID:</span>
-                <span className="text-xs">{session?.user?.id}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Role-specific content */}
-        {session?.user?.role === "admin" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Admin Controls</CardTitle>
-              <CardDescription>System management options</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>As an admin, you have access to all system features and management tools.</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {session?.user?.role === "property_manager" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Property Management</CardTitle>
-              <CardDescription>Manage properties and tenants</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>As a property manager, you can manage buildings, units, and tenant relationships.</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {session?.user?.role === "tenant" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Tenant Portal</CardTitle>
-              <CardDescription>Your rental information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>As a tenant, you can view your rental details, make payments, and submit maintenance requests.</p>
-            </CardContent>
-          </Card>
-        )}
-
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Current Balance */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

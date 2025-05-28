@@ -1,0 +1,27 @@
+{
+  "name": "property-management/system",
+  "description": "Complete Property Management System with SMS and Payment Integration",
+  "type": "project",
+  "require": {
+    "php": ">=8.0",
+    "stripe/stripe-php": "^10.0",
+    "twilio/sdk": "^7.0",
+    "phpmailer/phpmailer": "^6.8",
+    "monolog/monolog": "^3.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "PropertyManagement\\": "lib/"
+    }
+  },
+  "scripts": {
+    "post-install-cmd": ["php scripts/setup_database.php", "php scripts/create_admin_user.php"]
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

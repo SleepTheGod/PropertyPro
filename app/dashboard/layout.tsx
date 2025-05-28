@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -9,62 +11,50 @@ import {
   CreditCard,
   FileText,
   Home,
+  LogOut,
   Menu,
   MessageSquare,
   Settings,
   PenToolIcon as Tool,
-  Users,
+  User,
   X,
 } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { ThemeToggle } from "@/components/theme-toggle"
 
-export default function DashboardLayout({ children }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // Define navigation based on user role
-  // For demo purposes, we'll use a tenant role
-  const userRole = "tenant"
-
-  const getNavigation = () => {
-    const baseNavigation = [
-      { name: "Dashboard", href: "/dashboard", icon: Home },
-      { name: "Settings", href: "/dashboard/settings", icon: Settings },
-    ]
-
-    switch (userRole) {
-      case "tenant":
-        return [
-          ...baseNavigation,
-          { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
-          { name: "Maintenance", href: "/dashboard/maintenance", icon: Tool },
-          { name: "Bulletin Board", href: "/dashboard/bulletin", icon: MessageSquare },
-          { name: "Documents", href: "/dashboard/documents", icon: FileText },
-        ]
-      case "property_manager":
-        return [
-          ...baseNavigation,
-          { name: "Tenants", href: "/dashboard/tenants", icon: Users },
-          { name: "Buildings", href: "/dashboard/buildings", icon: Building },
-          { name: "Maintenance", href: "/dashboard/maintenance", icon: Tool },
-          { name: "Bulletin Board", href: "/dashboard/bulletin", icon: MessageSquare },
-        ]
-      case "admin":
-        return [
-          ...baseNavigation,
-          { name: "Users", href: "/dashboard/users", icon: Users },
-          { name: "Properties", href: "/dashboard/properties", icon: Building },
-          { name: "System", href: "/dashboard/system", icon: Settings },
-          { name: "Administration", href: "/dashboard/admin", icon: Settings },
-        ]
-      default:
-        return baseNavigation
-    }
+  // Mock user data
+  const user = {
+    name: "John Doe",
+    email: "john@example.com",
+    role: "tenant",
+    avatar: "/placeholder.svg?key=6e2d7",
   }
 
-  const navigation = getNavigation()
+  const navigation = [
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
+    { name: "Maintenance", href: "/dashboard/maintenance", icon: Tool },
+    { name: "Bulletin Board", href: "/dashboard/bulletin", icon: MessageSquare },
+    { name: "Documents", href: "/dashboard/documents", icon: FileText },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  ]
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -115,14 +105,42 @@ export default function DashboardLayout({ children }) {
           <span className="text-lg font-bold">PropertyPro</span>
         </div>
         <div className="ml-auto flex items-center gap-4">
-          <ThemeToggle />
           <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
           </Button>
-          <Button variant="outline" size="sm">
-            Sign Out
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                  <AvatarFallback>JD</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span>{user.name}</span>
+                  <span className="text-xs text-muted-foreground">{user.email}</span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

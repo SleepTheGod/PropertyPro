@@ -1,66 +1,52 @@
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { compare } from "bcrypt"
-import type { NextAuthOptions } from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { prisma } from "@/lib/prisma"
+import bcrypt from "bcryptjs"
+import { db } from "./db"
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
+export class AuthService {
+  static async hashPassword(password: string): Promise<string> {
+    const saltRounds = 12
+    return await bcrypt.hash(password, saltRounds)
+  }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-          include: {
-            role: true,
-          },
-        })
+  static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword)
+  }
 
-        if (!user || !(await compare(credentials.password, user.password))) {
-          return null
-        }
+  static generateSecureToken(): string {
+    return (
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15) +
+      Date.now().toString(36)
+    )
+  }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role?.name,
-          image: user.image,
-        }
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.role = user.role
+  static async getUserByEmail(email: string) {
+    try {
+      const result = await db.query(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [email])
+      return result.rows[0] || null
+    } catch (error) {
+      console.error("Error getting user by email:", error)
+      return null
+    }
+  }
+
+  static async validateCredentials(email: string, password: string) {
+    try {
+      const user = await this.getUserByEmail(email)
+
+      if (!user) {
+        return null
       }
-      return token
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
+
+      const isValid = await this.verifyPassword(password, user.password)
+
+      if (!isValid) {
+        return null
       }
-      return session
-    },
-  },
+
+      return user
+    } catch (error) {
+      console.error("Error validating credentials:", error)
+      return null
+    }
+  }
 }
