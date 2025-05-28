@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 export default function BulletinPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -209,10 +210,44 @@ export default function BulletinPage() {
                 <Filter className="mr-2 h-4 w-4" />
                 Filter
               </Button>
-              <Button size="sm">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Post
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Post
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Post</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleNewPost}>
+                    <div className="space-y-4">
+                      <Textarea
+                        placeholder="What's on your mind?"
+                        className="min-h-[100px]"
+                        value={newPostContent}
+                        onChange={(e) => setNewPostContent(e.target.value)}
+                      />
+                      <div className="flex justify-between">
+                        <div className="flex items-center gap-2">
+                          <Button type="button" variant="outline" size="sm">
+                            <Tag className="mr-2 h-3.5 w-3.5" />
+                            Category
+                          </Button>
+                          <Button type="button" variant="outline" size="sm">
+                            <Users className="mr-2 h-3.5 w-3.5" />
+                            Audience
+                          </Button>
+                        </div>
+                        <Button type="submit" size="sm" disabled={!newPostContent.trim()}>
+                          Post
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -281,37 +316,6 @@ export default function BulletinPage() {
             </TabsContent>
 
             <TabsContent value="community" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Create a Post</CardTitle>
-                </CardHeader>
-                <form onSubmit={handleNewPost}>
-                  <CardContent>
-                    <Textarea
-                      placeholder="What's on your mind?"
-                      className="min-h-[100px]"
-                      value={newPostContent}
-                      onChange={(e) => setNewPostContent(e.target.value)}
-                    />
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" size="sm">
-                        <Tag className="mr-2 h-3.5 w-3.5" />
-                        Category
-                      </Button>
-                      <Button type="button" variant="outline" size="sm">
-                        <Users className="mr-2 h-3.5 w-3.5" />
-                        Audience
-                      </Button>
-                    </div>
-                    <Button type="submit" size="sm" disabled={!newPostContent.trim()}>
-                      Post
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-
               {communityPosts.map((post) => (
                 <Card key={post.id}>
                   <CardHeader className="pb-3">
