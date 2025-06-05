@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { AuthService } from "@/lib/auth"
 import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production"
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,23 +21,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // Generate session token
-    const token = AuthService.generateSecureToken()
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" },
+    )
 
     // Set secure cookie
-    cookies().set("auth-token", token, {
+    const cookieStore = cookies()
+    cookieStore.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
     })
-
-    // Return user info (excluding password)
-    const { password: _, ...userWithoutPassword } = user
 
     return NextResponse.json({
       success: true,
-      user: userWithoutPassword,
+      user: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+      },
     })
   } catch (error) {
     console.error("Login error:", error)

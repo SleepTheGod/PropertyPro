@@ -12,17 +12,18 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 export default function BulletinPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [newPostContent, setNewPostContent] = useState("")
+  const [showNewPostForm, setShowNewPostForm] = useState(false)
 
   const handleNewPost = (e: React.FormEvent) => {
     e.preventDefault()
     // Handle new post submission
     console.log("New post:", newPostContent)
     setNewPostContent("")
+    setShowNewPostForm(false)
   }
 
   // Mock bulletin board data
@@ -36,7 +37,7 @@ export default function BulletinPage() {
       author: {
         name: "Sarah Johnson",
         role: "Property Manager",
-        avatar: "/placeholder.svg?key=8ej2k",
+        avatar: "/placeholder.svg?height=32&width=32&text=SJ",
       },
       pinned: true,
       category: "Maintenance",
@@ -53,7 +54,7 @@ export default function BulletinPage() {
       author: {
         name: "Sarah Johnson",
         role: "Property Manager",
-        avatar: "/placeholder.svg?key=8ej2k",
+        avatar: "/placeholder.svg?height=32&width=32&text=SJ",
       },
       pinned: true,
       category: "Events",
@@ -70,7 +71,7 @@ export default function BulletinPage() {
       author: {
         name: "Sarah Johnson",
         role: "Property Manager",
-        avatar: "/placeholder.svg?key=8ej2k",
+        avatar: "/placeholder.svg?height=32&width=32&text=SJ",
       },
       pinned: false,
       category: "Maintenance",
@@ -89,7 +90,7 @@ export default function BulletinPage() {
       author: {
         name: "Michael Chen",
         unit: "Apt 201",
-        avatar: "/placeholder.svg?key=9fk3l",
+        avatar: "/placeholder.svg?height=32&width=32&text=MC",
       },
       category: "Recommendations",
       comments: 7,
@@ -103,7 +104,7 @@ export default function BulletinPage() {
       author: {
         name: "Emily Rodriguez",
         unit: "Apt 512",
-        avatar: "/placeholder.svg?key=7dk2j",
+        avatar: "/placeholder.svg?height=32&width=32&text=ER",
       },
       category: "Lost & Found",
       comments: 2,
@@ -117,7 +118,7 @@ export default function BulletinPage() {
       author: {
         name: "David Wilson",
         unit: "Apt 405",
-        avatar: "/placeholder.svg?key=5hl9m",
+        avatar: "/placeholder.svg?height=32&width=32&text=DW",
       },
       category: "Marketplace",
       comments: 5,
@@ -210,46 +211,53 @@ export default function BulletinPage() {
                 <Filter className="mr-2 h-4 w-4" />
                 Filter
               </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    New Post
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Post</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleNewPost}>
-                    <div className="space-y-4">
-                      <Textarea
-                        placeholder="What's on your mind?"
-                        className="min-h-[100px]"
-                        value={newPostContent}
-                        onChange={(e) => setNewPostContent(e.target.value)}
-                      />
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-2">
-                          <Button type="button" variant="outline" size="sm">
-                            <Tag className="mr-2 h-3.5 w-3.5" />
-                            Category
-                          </Button>
-                          <Button type="button" variant="outline" size="sm">
-                            <Users className="mr-2 h-3.5 w-3.5" />
-                            Audience
-                          </Button>
-                        </div>
+              <Button size="sm" onClick={() => setShowNewPostForm(!showNewPostForm)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Post
+              </Button>
+            </div>
+          </div>
+
+          {/* New Post Form */}
+          {showNewPostForm && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Create New Post</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleNewPost}>
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="What's on your mind?"
+                      className="min-h-[100px]"
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                    />
+                    <div className="flex justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="sm">
+                          <Tag className="mr-2 h-3.5 w-3.5" />
+                          Category
+                        </Button>
+                        <Button type="button" variant="outline" size="sm">
+                          <Users className="mr-2 h-3.5 w-3.5" />
+                          Audience
+                        </Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setShowNewPostForm(false)}>
+                          Cancel
+                        </Button>
                         <Button type="submit" size="sm" disabled={!newPostContent.trim()}>
                           Post
                         </Button>
                       </div>
                     </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
           <Tabs defaultValue="announcements" className="space-y-4">
             <TabsList>

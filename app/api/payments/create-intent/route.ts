@@ -1,11 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
+import { verifyAuth } from "@/lib/middleware-auth"
 import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await verifyAuth(req)
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { amount, currency = "usd", tenantId, propertyId, description, type = "rent_payment" } = await req.json()
 
     // Validate required fields
@@ -19,9 +25,16 @@ export async function POST(req: NextRequest) {
 
     // Get tenant information
     const tenant = await sql`
-      SELECT t.*, u.email, u.first_name, u.last_name, u.phone
+      SELECT 
+        t.*,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.phone,
+        p.address as property_address
       FROM tenants t
       JOIN users u ON t.user_id = u.id
+      JOIN properties p ON t.property_id = p.id
       WHERE t.id = ${tenantId}
     `
 
@@ -41,7 +54,8 @@ export async function POST(req: NextRequest) {
         phone: tenantData.phone,
         metadata: {
           tenant_id: tenantId,
-          property_id: propertyId || "",
+          property_id: propertyId || tenantData.property_id,
+          user_id: user.id,
         },
       })
 
@@ -50,7 +64,7 @@ export async function POST(req: NextRequest) {
       // Update tenant with Stripe customer ID
       await sql`
         UPDATE tenants 
-        SET stripe_customer_id = ${customerId}
+        SET stripe_customer_id = ${customerId}, updated_at = NOW()
         WHERE id = ${tenantId}
       `
     }
@@ -60,11 +74,12 @@ export async function POST(req: NextRequest) {
       amount: Math.round(amount * 100), // Convert to cents
       currency,
       customer: customerId,
-      description: description || `${type.replace("_", " ")} payment`,
+      description: description || `${type.replace("_", " ")} - ${tenantData.property_address}`,
       metadata: {
         tenant_id: tenantId,
-        property_id: propertyId || "",
+        property_id: propertyId || tenantData.property_id,
         type,
+        user_id: user.id,
       },
       automatic_payment_methods: {
         enabled: true,
@@ -82,16 +97,20 @@ export async function POST(req: NextRequest) {
         type, 
         status, 
         stripe_payment_intent_id,
-        created_at
+        created_by,
+        created_at,
+        updated_at
       ) VALUES (
         ${tenantId}, 
-        ${propertyId}, 
+        ${propertyId || tenantData.property_id}, 
         ${amount}, 
         ${currency}, 
-        ${description || `${type.replace("_", " ")} payment`}, 
+        ${description || `${type.replace("_", " ")} - ${tenantData.property_address}`}, 
         ${type}, 
         'pending', 
         ${paymentIntent.id},
+        ${user.id},
+        NOW(),
         NOW()
       )
     `
@@ -99,9 +118,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      customer: {
+        name: `${tenantData.first_name} ${tenantData.last_name}`,
+        email: tenantData.email,
+        property: tenantData.property_address,
+      },
     })
   } catch (error: any) {
     console.error("Error creating payment intent:", error)
-    return NextResponse.json({ error: "Failed to create payment intent" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to create payment intent",
+        details: error.message,
+      },
+      { status: 500 },
+    )
   }
 }

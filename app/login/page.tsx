@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       const data = await response.json()
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         toast({
           title: "Login successful",
           description: "Welcome back!",
@@ -42,9 +42,9 @@ export default function LoginPage() {
 
         // Redirect based on user role
         if (data.user.role === "admin") {
-          router.push("/admin/dashboard")
+          window.location.href = "/admin/dashboard"
         } else {
-          router.push("/dashboard")
+          window.location.href = "/dashboard"
         }
       } else {
         toast({
@@ -54,6 +54,7 @@ export default function LoginPage() {
         })
       }
     } catch (error) {
+      console.error("Login error:", error)
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -134,8 +135,9 @@ export default function LoginPage() {
             </div>
             <div className="bg-muted p-3 rounded-md text-sm">
               <p className="font-medium mb-1">Demo Credentials:</p>
-              <p>Admin: admin@example.com / password</p>
-              <p>Tenant: tenant@example.com / tenant123</p>
+              <p>Admin: admin@propertypro.com / admin123</p>
+              <p>Tenant: tenant@propertypro.com / tenant123</p>
+              <p>Landlord: landlord@propertypro.com / landlord123</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col">
