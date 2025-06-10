@@ -10,10 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Building2, User, AlertCircle } from "lucide-react"
+import { Building2, Shield, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -40,11 +40,15 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast({
-          title: "Login Successful",
-          description: "Welcome to your dashboard",
-        })
-        router.push("/dashboard")
+        if (data.user.role === "admin") {
+          toast({
+            title: "Login Successful",
+            description: "Welcome to the admin dashboard",
+          })
+          router.push("/admin/dashboard")
+        } else {
+          setError("Access denied. Admin privileges required.")
+        }
       } else {
         setError(data.error || "Login failed")
       }
@@ -56,39 +60,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            <User className="h-8 w-8 text-blue-600" />
+            <Shield className="h-8 w-8 text-blue-400" />
+            <Building2 className="h-8 w-8 text-blue-400" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Tenant Portal</h1>
-          <p className="text-gray-600">PropertyPro Tenant Access</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Admin Portal</h1>
+          <p className="text-slate-400">PropertyPro Administration</p>
         </div>
 
-        <Card className="shadow-xl">
+        <Card className="border-slate-700 bg-slate-800/50 backdrop-blur">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Sign In</CardTitle>
-            <CardDescription className="text-center">
-              Enter your credentials to access your tenant dashboard
+            <CardTitle className="text-2xl text-center text-white">Sign In</CardTitle>
+            <CardDescription className="text-center text-slate-400">
+              Enter your admin credentials to access the dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-200">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your.email@example.com"
+                  placeholder="admin@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-slate-200">
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
@@ -96,11 +105,12 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
                 />
               </div>
 
               {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="bg-red-900/50 border-red-800">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -111,19 +121,16 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center space-y-2">
-              <Link href="/register" className="text-sm text-blue-600 hover:text-blue-500">
-                Don't have an account? Register here
-              </Link>
-              <div>
-                <Link href="/admin/login" className="text-sm text-gray-500 hover:text-gray-700">
-                  Admin Login
-                </Link>
+            <div className="mt-6 p-4 bg-slate-700/50 rounded-lg">
+              <h3 className="text-sm font-medium text-slate-200 mb-2">Demo Credentials:</h3>
+              <div className="text-xs text-slate-400 space-y-1">
+                <p>Email: root@admin.com</p>
+                <p>Password: root</p>
               </div>
             </div>
 
             <div className="mt-4 text-center">
-              <Link href="/" className="text-sm text-blue-600 hover:text-blue-500">
+              <Link href="/" className="text-sm text-blue-400 hover:text-blue-300">
                 ← Back to Home
               </Link>
             </div>

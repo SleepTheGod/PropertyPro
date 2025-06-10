@@ -1,56 +1,54 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Building, DollarSign, Users, Wrench, AlertTriangle, CheckCircle, Clock, CreditCard } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button"
+import { CreditCard, Wrench, MessageSquare, Calendar, DollarSign, Home } from "lucide-react"
+import Link from "next/link"
 
-interface DashboardData {
-  user: {
-    id: string
-    first_name: string
-    last_name: string
-    role: string
-    email: string
+interface TenantDashboardData {
+  tenant: {
+    name: string
+    unit: string
+    property: string
+    leaseEnd: string
   }
-  stats: {
-    totalProperties: number
-    totalTenants: number
-    monthlyRevenue: number
-    pendingMaintenance: number
-    occupancyRate: number
-    collectionRate: number
+  payments: {
+    nextDue: {
+      amount: number
+      dueDate: string
+      status: string
+    }
+    history: Array<{
+      id: number
+      amount: number
+      date: string
+      status: string
+      type: string
+    }>
   }
-  recentPayments: Array<{
-    id: string
-    tenant_name: string
-    amount: number
+  maintenance: {
+    active: number
+    recent: Array<{
+      id: number
+      title: string
+      status: string
+      date: string
+      priority: string
+    }>
+  }
+  announcements: Array<{
+    id: number
+    title: string
     date: string
-    status: string
-  }>
-  maintenanceRequests: Array<{
-    id: string
-    property_address: string
-    description: string
-    priority: string
-    status: string
-    created_at: string
-  }>
-  upcomingRent: Array<{
-    id: string
-    tenant_name: string
-    property_address: string
-    amount: number
-    due_date: string
+    category: string
   }>
 }
 
-export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null)
+export default function TenantDashboard() {
+  const [data, setData] = useState<TenantDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
 
   useEffect(() => {
     fetchDashboardData()
@@ -62,16 +60,9 @@ export default function DashboardPage() {
       if (response.ok) {
         const dashboardData = await response.json()
         setData(dashboardData)
-      } else {
-        throw new Error("Failed to fetch dashboard data")
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data",
-        variant: "destructive",
-      })
     } finally {
       setLoading(false)
     }
@@ -80,176 +71,261 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="text-lg">Loading dashboard...</div>
       </div>
     )
   }
 
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Unable to load dashboard</h2>
-          <Button onClick={fetchDashboardData}>Try Again</Button>
-        </div>
-      </div>
-    )
+  // Mock data for demo purposes
+  const mockData: TenantDashboardData = {
+    tenant: {
+      name: "John Doe",
+      unit: "Apt 204",
+      property: "Sunset Towers",
+      leaseEnd: "2024-12-31",
+    },
+    payments: {
+      nextDue: {
+        amount: 1850,
+        dueDate: "2024-05-01",
+        status: "due",
+      },
+      history: [
+        { id: 1, amount: 1850, date: "2024-04-01", status: "paid", type: "rent" },
+        { id: 2, amount: 1850, date: "2024-03-01", status: "paid", type: "rent" },
+        { id: 3, amount: 1850, date: "2024-02-01", status: "paid", type: "rent" },
+      ],
+    },
+    maintenance: {
+      active: 1,
+      recent: [
+        { id: 1, title: "Leaky faucet in kitchen", status: "in_progress", date: "2024-04-25", priority: "medium" },
+        { id: 2, title: "AC unit maintenance", status: "completed", date: "2024-04-20", priority: "low" },
+        { id: 3, title: "Broken light fixture", status: "completed", date: "2024-04-15", priority: "high" },
+      ],
+    },
+    announcements: [
+      { id: 1, title: "Building Maintenance Notice", date: "2024-04-29", category: "Maintenance" },
+      { id: 2, title: "Community BBQ Event", date: "2024-04-27", category: "Events" },
+      { id: 3, title: "Parking Lot Repainting", date: "2024-04-25", category: "Maintenance" },
+    ],
   }
 
-  const { user, stats, recentPayments, maintenanceRequests, upcomingRent } = data
+  const displayData = data || mockData
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "paid":
+      case "completed":
+        return "default"
+      case "due":
+      case "overdue":
+        return "destructive"
+      case "in_progress":
+        return "secondary"
+      default:
+        return "outline"
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+      case "emergency":
+        return "destructive"
+      case "medium":
+        return "secondary"
+      case "low":
+        return "outline"
+      default:
+        return "outline"
+    }
+  }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Welcome back, {user.first_name}!</h2>
-        <div className="flex items-center space-x-2">
-          <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-          </Badge>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {displayData.tenant.name}!</h1>
+          <p className="text-muted-foreground">
+            {displayData.tenant.unit} • {displayData.tenant.property}
+          </p>
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProperties}</div>
-            <p className="text-xs text-muted-foreground">Active properties under management</p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/payments">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pay Rent</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${displayData.payments.nextDue.amount}</div>
+              <p className="text-xs text-muted-foreground">Due {displayData.payments.nextDue.dueDate}</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/maintenance">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{displayData.maintenance.active}</div>
+              <p className="text-xs text-muted-foreground">Active requests</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/bulletin">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Bulletin Board</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{displayData.announcements.length}</div>
+              <p className="text-xs text-muted-foreground">New announcements</p>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Lease Info</CardTitle>
+            <Home className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTenants}</div>
-            <p className="text-xs text-muted-foreground">Occupancy rate: {stats.occupancyRate}%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.monthlyRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Collection rate: {stats.collectionRate}%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Maintenance</CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingMaintenance}</div>
-            <p className="text-xs text-muted-foreground">Requests awaiting attention</p>
+            <div className="text-2xl font-bold">8 months</div>
+            <p className="text-xs text-muted-foreground">Until lease end</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Payments */}
-        <Card className="col-span-4">
+      {/* Payment Status */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
           <CardHeader>
-            <CardTitle>Recent Payments</CardTitle>
-            <CardDescription>Latest rent payments received</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Next Payment
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentPayments.map((payment) => (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold">${displayData.payments.nextDue.amount}</p>
+                  <p className="text-sm text-muted-foreground">Due {displayData.payments.nextDue.dueDate}</p>
+                </div>
+                <Badge variant={getStatusColor(displayData.payments.nextDue.status)}>
+                  {displayData.payments.nextDue.status.toUpperCase()}
+                </Badge>
+              </div>
+              <Link href="/dashboard/payments">
+                <Button className="w-full">Pay Now</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Payment History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {displayData.payments.history.slice(0, 3).map((payment) => (
                 <div key={payment.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{payment.tenant_name}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(payment.date).toLocaleDateString()}</p>
-                    </div>
+                  <div>
+                    <p className="text-sm font-medium">${payment.amount}</p>
+                    <p className="text-xs text-muted-foreground">{payment.date}</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium">${payment.amount}</span>
-                    <Badge variant={payment.status === "completed" ? "default" : "secondary"} className="text-xs">
-                      {payment.status}
+                  <Badge variant={getStatusColor(payment.status)}>{payment.status}</Badge>
+                </div>
+              ))}
+              <Link href="/dashboard/payments">
+                <Button variant="outline" size="sm" className="w-full">
+                  View All Payments
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Maintenance & Announcements */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              Maintenance Requests
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {displayData.maintenance.recent.slice(0, 3).map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{request.title}</p>
+                    <p className="text-xs text-muted-foreground">{request.date}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant={getPriorityColor(request.priority)} className="text-xs">
+                      {request.priority}
+                    </Badge>
+                    <Badge variant={getStatusColor(request.status)} className="text-xs">
+                      {request.status.replace("_", " ")}
                     </Badge>
                   </div>
                 </div>
               ))}
+              <Link href="/dashboard/maintenance">
+                <Button variant="outline" size="sm" className="w-full">
+                  View All Requests
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Maintenance Requests */}
-        <Card className="col-span-3">
+        <Card>
           <CardHeader>
-            <CardTitle>Maintenance Requests</CardTitle>
-            <CardDescription>Recent maintenance issues</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Recent Announcements
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {maintenanceRequests.map((request) => (
-                <div key={request.id} className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    {request.priority === "high" ? (
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
-                    ) : request.status === "completed" ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-yellow-500" />
-                    )}
+            <div className="space-y-3">
+              {displayData.announcements.slice(0, 3).map((announcement) => (
+                <div key={announcement.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{announcement.title}</p>
+                    <p className="text-xs text-muted-foreground">{announcement.date}</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{request.property_address}</p>
-                    <p className="text-xs text-muted-foreground truncate">{request.description}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Badge variant={request.priority === "high" ? "destructive" : "secondary"} className="text-xs">
-                        {request.priority}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(request.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {announcement.category}
+                  </Badge>
                 </div>
               ))}
+              <Link href="/dashboard/bulletin">
+                <Button variant="outline" size="sm" className="w-full">
+                  View Bulletin Board
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Upcoming Rent */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Rent Due</CardTitle>
-          <CardDescription>Rent payments due in the next 7 days</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingRent.map((rent) => (
-              <div key={rent.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">{rent.tenant_name}</p>
-                  <p className="text-xs text-muted-foreground">{rent.property_address}</p>
-                  <p className="text-xs text-muted-foreground">Due: {new Date(rent.due_date).toLocaleDateString()}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold">${rent.amount}</p>
-                  <Button size="sm" variant="outline" className="mt-1">
-                    Send Reminder
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
