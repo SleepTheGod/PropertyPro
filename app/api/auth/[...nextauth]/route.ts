@@ -1,8 +1,9 @@
-import NextAuth from "next-auth"
+import NextAuth, { type NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { AuthService } from "@/lib/auth"
 
-const handler = NextAuth({
+// Export the authOptions configuration object with proper typing
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -15,17 +16,22 @@ const handler = NextAuth({
           return null
         }
 
-        const user = await AuthService.validateCredentials(credentials.email, credentials.password)
+        try {
+          const user = await AuthService.validateCredentials(credentials.email, credentials.password)
 
-        if (!user) {
+          if (!user) {
+            return null
+          }
+
+          return {
+            id: user.id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           return null
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
         }
       },
     }),
@@ -54,6 +60,10 @@ const handler = NextAuth({
     signIn: "/login",
     error: "/login",
   },
-})
+  secret: process.env.NEXTAUTH_SECRET,
+}
+
+// Create the handler using the exported authOptions
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
